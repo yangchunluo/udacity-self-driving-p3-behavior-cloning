@@ -1,5 +1,3 @@
-#! /home/carnd/anaconda3/envs/carnd-term1/bin/python
-
 import csv
 import os
 import cv2
