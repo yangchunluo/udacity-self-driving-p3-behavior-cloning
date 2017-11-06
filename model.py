@@ -23,11 +23,10 @@ def data_generator(samples, batch_size):
             batch_samples = samples[offset : offset + batch_size]
             batch_images = []
             batch_angles = []
-            for line, is_flip in batch_samples:
-                path = os.path.join(DRIVE_DATA_PATH, 'IMG', os.path.basename(line[0]))
+            for path, angle, flip in batch_samples:
+                path = os.path.join(DRIVE_DATA_PATH, 'IMG', os.path.basename(path))
                 image = cv2.imread(path)
-                angle = float(line[3])
-                if is_flip:
+                if flip:
                     image = cv2.flip(image, 1)
                     angle *= -1.0
                 batch_images.append(image)
@@ -43,8 +42,14 @@ def read_driving_log():
     with open(os.path.join(DRIVE_DATA_PATH, 'driving_log.csv')) as f:
         reader = csv.reader(f)
         for line in reader:
-            samples.append((line, True))
-            samples.append((line, False))
+            angle = float(line[3])
+            center = line[0]
+            left = line[1]
+            right = line[2]
+            samples.append((center, angle, True))
+            samples.append((center, angle, False))
+            samples.append((left, angle + CORRECTION, False))
+            samples.append((right, angle - CORRECTION, False))
     # The returned sample is a tuple of csv line and a boolean (whether to flip the image).
     # The samples will be shuffled later.
     return samples
@@ -85,7 +90,7 @@ def main():
     model = build_model()
     
     # Fit the model.
-    model.fit_generator(train_generator, len(train_samples), nb_epoch=7,
+    model.fit_generator(train_generator, len(train_samples), nb_epoch=10,
                         validation_data=valid_generator, nb_val_samples=len(valid_samples))
 
     model.save('model.h5')
