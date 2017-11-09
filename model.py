@@ -9,7 +9,7 @@ from keras.layers.pooling import MaxPooling2D
 import sklearn
 from sklearn.model_selection import train_test_split
 
-DRIVE_DATA_PATH = './yc-drive-data'
+DRIVE_DATA_PATH = './driving-data'
 IMAGE_SHAPE = (160, 320, 3)
 CORRECTION = 0.2
 BATCH_SIZE = 128
@@ -23,8 +23,8 @@ def data_generator(samples, batch_size):
             batch_samples = samples[offset : offset + batch_size]
             batch_images = []
             batch_angles = []
-            for path, angle, flip in batch_samples:
-                path = os.path.join(DRIVE_DATA_PATH, 'IMG', os.path.basename(path))
+            for subdir, path, angle, flip in batch_samples:
+                path = os.path.join(DRIVE_DATA_PATH, subdir, 'IMG', os.path.basename(path))
                 image = cv2.imread(path)
                 if flip:
                     image = cv2.flip(image, 1)
@@ -38,19 +38,27 @@ def data_generator(samples, batch_size):
 
 def read_driving_log():
     samples = []
-    # Read the entire driving log into memory.
-    with open(os.path.join(DRIVE_DATA_PATH, 'driving_log.csv')) as f:
-        reader = csv.reader(f)
-        for line in reader:
-            angle = float(line[3])
-            center = line[0]
-            left = line[1]
-            right = line[2]
-            samples.append((center, angle, True))
-            samples.append((center, angle, False))
-            samples.append((left, angle + CORRECTION, False))
-            samples.append((right, angle - CORRECTION, False))
-    # The returned sample is a tuple of csv line and a boolean (whether to flip the image).
+    # Read the entire driving log (not images) into memory.
+    for subdir in [
+        'track1-forward',
+        'track1-backward',
+        'track1-left-recovery',
+        'track1-right-recovery',
+#        'track2-forward'
+    ]:
+        with open(os.path.join(DRIVE_DATA_PATH, subdir, 'driving_log.csv')) as f:
+            reader = csv.reader(f)
+            for line in reader:
+                angle = float(line[3])
+                center = line[0]
+                left = line[1]
+                right = line[2]
+                # sub directory, image path (when catpured), angle, whether to flip it (for augmentation)
+                samples.append((subdir, center, angle, True))
+                samples.append((subdir, center, angle, False))
+                if 'recovery' not in subdir:
+                    samples.append((subdir, left, angle + CORRECTION, False))
+                    samples.append((subdir, right, angle - CORRECTION, False))
     # The samples will be shuffled later.
     return samples
 
@@ -64,6 +72,8 @@ def build_model():
     model.add(Convolution2D(6, 5, 5, activation='relu'))
     model.add(MaxPooling2D())
     model.add(Convolution2D(16, 5, 5, activation='relu'))
+    model.add(MaxPooling2D())
+    model.add(Convolution2D(32, 5, 5, activation='relu'))
     model.add(MaxPooling2D())
     # Fully connected layers
     model.add(Flatten())

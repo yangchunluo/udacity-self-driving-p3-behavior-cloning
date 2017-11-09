@@ -1,5 +1,6 @@
 model*.h5
 *drive-data
+*driving-data
 .DS_Store
 *data.zip
 mac?sim.app*
