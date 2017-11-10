@@ -42,6 +42,8 @@ Using the Udacity provided simulator and drive.py file, the car can be driven au
 python drive.py model.h5
 ```
 
+Note that during training the images were read in BGR format (`cv2.imread`). The received the image was in RGB format at inference time, which needed to be converted using `cv2.cvtColor(src, cv2.COLOR_RGB2BGR)`.
+
 #### 3. Submission code is usable and readable
 
 The model.py file contains the code for loading training data, and training and saving the convolution neural network. The file shows the pipeline I used for training and validating the model, and it contains comments to explain how the code works.
@@ -78,7 +80,7 @@ A couple lessons learned during collecting driving data:
 - Keep the speed between 10-15 mph so that the chance for oversteering and correction is small. It also matches the target speed in autonomous mode.
 - Create multiple directories to store the data for different purposes. In this way, a bad training run can be easily separated out and not "pollute" the entire training set.
 
-For details about how I created the training data, see the later section. 
+Training data was collected from both track 1 and track 2. For details about how I created the training data, see the later section. 
 
 ### Model Architecture and Training Strategy
 
@@ -129,7 +131,7 @@ Here is a visualization of the architecture using the built-in plot function in 
 
 #### 3. Creation of the Training Set & Training Process
 
-Training data was collected in the following manners:
+Training data was collected on track 1 in the following manners:
 
 * **Center-forward**: driving in counterclockwise direction, keeping the vehicle at center of the road, for two laps.
 * **Center-backward**: driving in clockwise direction, keeping the vehicle at center of the road, for one lap.
@@ -151,26 +153,38 @@ While these side cameras can help the model learn how to steer away from either 
 
 All the *center* camera images are augmented by flipping the image along the X axis and reversing the steering angle (multiplied by -1.0). This creates additional dataset for training and validation.
 
-Overall, there were a total of 33072 samples (including augmentation). At each epoch, 20% of the samples were used for validation and the rest for model fitting. I tried a total of 10 epochs, which is evidenced by the diminishing decrease of validation cost. I used an ADAM optimizer so that manually training the learning rate wasn't necessary.
+Training data was also collected track 2 by driving forward and backward. I did not explicitly collected recovery driving data on track 2 due to time limitation, though.
+
+Overall, there were a total of 55848 samples (including augmentation). At each epoch, 20% of the samples were used for validation and the rest for model fitting. I tried a total of 10 epochs, which is evidenced by the diminishing decrease of validation cost. I used an ADAM optimizer so that manually training the learning rate wasn't necessary.
 
 ```
-26457/26457 [==============================] - 60s - loss: 0.0156 - val_loss: 0.0105
+44678/44678 [==============================] - 98s - loss: 0.0507 - val_loss: 0.0399
 Epoch 2/10
-26457/26457 [==============================] - 57s - loss: 0.0111 - val_loss: 0.0086
+44678/44678 [==============================] - 96s - loss: 0.0401 - val_loss: 0.0341
 Epoch 3/10
-26457/26457 [==============================] - 57s - loss: 0.0099 - val_loss: 0.0082
+44678/44678 [==============================] - 96s - loss: 0.0357 - val_loss: 0.0312
 Epoch 4/10
-26457/26457 [==============================] - 57s - loss: 0.0090 - val_loss: 0.0076
+44678/44678 [==============================] - 96s - loss: 0.0331 - val_loss: 0.0305
 Epoch 5/10
-26457/26457 [==============================] - 57s - loss: 0.0084 - val_loss: 0.0071
+44678/44678 [==============================] - 96s - loss: 0.0307 - val_loss: 0.0282
 Epoch 6/10
-26457/26457 [==============================] - 56s - loss: 0.0079 - val_loss: 0.0068
+44678/44678 [==============================] - 96s - loss: 0.0292 - val_loss: 0.0281
 Epoch 7/10
-26457/26457 [==============================] - 57s - loss: 0.0076 - val_loss: 0.0069
+44678/44678 [==============================] - 96s - loss: 0.0273 - val_loss: 0.0286
 Epoch 8/10
-26457/26457 [==============================] - 57s - loss: 0.0071 - val_loss: 0.0066
+44678/44678 [==============================] - 95s - loss: 0.0257 - val_loss: 0.0315
 Epoch 9/10
-26457/26457 [==============================] - 57s - loss: 0.0068 - val_loss: 0.0065
+44678/44678 [==============================] - 95s - loss: 0.0248 - val_loss: 0.0259
 Epoch 10/10
-26457/26457 [==============================] - 57s - loss: 0.0066 - val_loss: 0.0067
+44678/44678 [==============================] - 96s - loss: 0.0233 - val_loss: 0.0263
 ```
+
+#### 4. Video Submission
+
+I have included three autonomous driving videos in the submission.
+
+- video.mpg shows the result of driving counterclockwise on track 1, as required by the rubirc.
+- video2.mpg shows the result of driving clockwise on track 1.
+- video3.mpg shows the result of driving on track 2.
+
+The vehicle is able to stays on track 1 driving either direction. For track 2, due to the limited driving data (not included explicit recovery), there were two spots where the vehicle went off track. When manually corrected, it could finish the entire track.
