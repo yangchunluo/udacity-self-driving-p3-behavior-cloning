@@ -2,6 +2,7 @@ import argparse
 import base64
 from datetime import datetime
 import os
+import cv2
 import shutil
 
 import numpy as np
@@ -60,7 +61,8 @@ def telemetry(sid, data):
         # The current image from the center camera of the car
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
-        image_array = np.asarray(image)
+        # Convert the image from RGB to BGR since the training is in BGR using cv2.imread().
+        image_array = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
         steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
 
         throttle = controller.update(float(speed))
